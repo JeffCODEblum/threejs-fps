@@ -40,7 +40,8 @@ window.onload = function() {
     a: false,
     s: false,
     d: false,
-    mouseButton: false
+    mouseButton: false,
+    space: false
   };
   document.addEventListener("keydown", function(e) {
     console.log(e.keyCode);
@@ -56,6 +57,9 @@ window.onload = function() {
         break;
       case 68:
         ctrl.d = true;
+        break;
+      case 32:
+        ctrl.space = true;
         break;
     }
   });
@@ -74,6 +78,9 @@ window.onload = function() {
       case 68:
         ctrl.d = false;
         break;
+      case 32:
+        ctrl.space = false;
+        break;
     }
   });
 
@@ -85,6 +92,10 @@ window.onload = function() {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x4444ff);
   document.body.appendChild(renderer.domElement);
+
+  var lastJump = 0;
+  var jumping = false;
+  var jumpCount = 0;
 
   var pointerIsLockedFlag = false;
   var lastShot = 0;
@@ -101,18 +112,36 @@ window.onload = function() {
   // make map
   // ground
   var geometry = new THREE.BoxGeometry(100, 1, 100);
-  var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-  var ground = new THREE.Mesh(geometry, material);
+  // var material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+  var grassTexture = new THREE.ImageUtils.loadTexture("./grass.jpg", function(
+    texture
+  ) {
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.x = 10;
+    texture.repeat.y = 10;
+  });
+  var boxMaterial1 = new THREE.MeshBasicMaterial({
+    map: grassTexture,
+    reflectivity: 0.8
+  });
+  var ground = new THREE.Mesh(geometry, boxMaterial1);
   ground.position.z = 0;
   scene.add(ground);
 
   // boxes
-  var cubeMat = new THREE.MeshBasicMaterial({ color: 0x444444 });
+  var brickTexture = new THREE.ImageUtils.loadTexture("./brick.png");
+  var brickMaterial = new THREE.MeshBasicMaterial({
+    map: brickTexture,
+    reflectivity: 0.8
+  });
+  // var cubeMat = new THREE.MeshBasicMaterial({ color: 0x444444 });
   for (var i = 0; i < 10; i++) {
     for (var j = 0; j < 10; j++) {
       if (Math.floor(Math.random() * 10) < 3) {
         var cubeGeo = new THREE.BoxGeometry(10, 10, 10);
-        var cube = new THREE.Mesh(cubeGeo, cubeMat);
+        // var cube = new THREE.Mesh(cubeGeo, cubeMat);
+        var cube = new THREE.Mesh(cubeGeo, brickMaterial);
         cube.position.x = i * 10 - 50;
         cube.position.z = j * 10 - 50;
         scene.add(cube);
@@ -126,11 +155,15 @@ window.onload = function() {
         event.movementX || event.mozMovementX || event.webkitMovementX || 0;
       var movementY =
         event.movementY || event.mozMovementY || event.webkitMovementY || 0;
-      console.log(movementX, movementY);
 
       camera.rotation.y -= movementX * 0.002;
-      camera.rotation.x -= movementY * 0.002;
-      camera.rotation.x -= movementY * 0.002;
+      if (
+        camera.rotation.x - movementY * 0.002 < 1.5 &&
+        camera.rotation.x - movementY * 0.002 > -1.5
+      )
+        camera.rotation.x -= movementY * 0.002;
+
+      console.log(camera.rotation.x);
     }
   });
 
@@ -142,6 +175,14 @@ window.onload = function() {
       lastShot = Date.now();
     }
 
+    if (ctrl.space && Date.now() - lastJump > 1000) {
+      this.lastJump = Date.now();
+      jumping = true;
+      jumpCount = 0;
+    }
+
+    camera.position.y = 2;
+
     if (shooting) {
       if (Date.now() - lastShot > 50) {
         shooting = false;
@@ -151,7 +192,6 @@ window.onload = function() {
     if (ctrl.s) camera.translateZ(0.2);
     if (ctrl.a) camera.translateX(-0.2);
     if (ctrl.d) camera.translateX(0.2);
-    camera.position.y = 2;
 
     context.clearRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#ff0000";
