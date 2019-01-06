@@ -240,12 +240,12 @@ window.onload = function() {
       graphics,
       200,
       0,
-      60,
-      60,
+      28,
+      28,
       canvas.width / 2,
       canvas.height / 2,
-      60,
-      60
+      28,
+      28
     );
     renderer.render(scene, camera);
   }
