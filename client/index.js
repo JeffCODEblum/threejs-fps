@@ -1,4 +1,5 @@
-import Graphics from "./assets/graphics.png";
+import TwoDRenderer from "./twoDRenderer.js";
+import Player from "./player.js";
 
 var PI_2 = Math.PI / 2;
 
@@ -12,8 +13,7 @@ window.onload = function() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
   var context = canvas.getContext("2d");
-  var graphics = new Image();
-  graphics.src = Graphics;
+
   // Ask the browser to release the pointer
   // document.exitPointerLock = document.exitPointerLock ||
   // 			   document.mozExitPointerLock ||
@@ -31,12 +31,6 @@ window.onload = function() {
   camera.rotation.order = "YXZ";
   camera.rotation.set(0, 0, 0);
 
-  // var pitchObject = new THREE.Object3D();
-  // pitchObject.add(camera);
-  // var yawObject = new THREE.Object3D();
-  // yawObject.position.y = 0;
-  // yawObject.add(pitchObject);
-
   var ctrl = {
     w: false,
     a: false,
@@ -45,6 +39,7 @@ window.onload = function() {
     mouseButton: false,
     space: false
   };
+
   document.addEventListener("keydown", function(e) {
     console.log(e.keyCode);
     switch (e.keyCode) {
@@ -89,25 +84,23 @@ window.onload = function() {
   document.addEventListener("mouseup", event => {
     ctrl.mouseButton = false;
   });
+
   var renderer = new THREE.WebGLRenderer();
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0x4444ff);
   document.body.appendChild(renderer.domElement);
 
-  var lastJump = 0;
-  var jumping = false;
-  var jumpCount = 0;
+  var player = new Player(camera, ctrl);
 
-  var pointerIsLockedFlag = false;
-  var lastShot = 0;
-  var shooting = false;
+  var twoDRenderer = new TwoDRenderer(canvas, context, player);
+
   document.addEventListener("mousedown", event => {
     renderer.domElement.requestPointerLock =
       renderer.domElement.requestPointerLock ||
       renderer.domElement.mozRequestPointerLock;
     renderer.domElement.requestPointerLock();
-    pointerIsLockedFlag = true;
+    player.pointerIsLockedFlag = true;
     ctrl.mouseButton = true;
   });
 
@@ -152,101 +145,13 @@ window.onload = function() {
   }
 
   document.addEventListener("mousemove", event => {
-    if (pointerIsLockedFlag) {
-      var movementX =
-        event.movementX || event.mozMovementX || event.webkitMovementX || 0;
-      var movementY =
-        event.movementY || event.mozMovementY || event.webkitMovementY || 0;
-
-      camera.rotation.y -= movementX * 0.002;
-      if (
-        camera.rotation.x - movementY * 0.002 < 1.5 &&
-        camera.rotation.x - movementY * 0.002 > -1.5
-      )
-        camera.rotation.x -= movementY * 0.002;
-
-      console.log(camera.rotation.x);
-    }
+    player.handleMouseMove(event);
   });
 
   function animate() {
     requestAnimationFrame(animate);
-
-    if (ctrl.mouseButton && Date.now() - lastShot > 100) {
-      shooting = true;
-      lastShot = Date.now();
-    }
-
-    if (ctrl.space && Date.now() - lastJump > 1000) {
-      this.lastJump = Date.now();
-      jumping = true;
-      jumpCount = 0;
-    }
-
-    camera.position.y = 2;
-
-    if (shooting) {
-      if (Date.now() - lastShot > 50) {
-        shooting = false;
-      }
-    }
-    if (ctrl.w) camera.translateZ(-0.2);
-    if (ctrl.s) camera.translateZ(0.2);
-    if (ctrl.a) camera.translateX(-0.2);
-    if (ctrl.d) camera.translateX(0.2);
-
-    context.clearRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = "#ff0000";
-    // context.fillRect(0, 0, canvas.width, canvas.height);
-    if (shooting) {
-      context.drawImage(
-        graphics,
-        260,
-        0,
-        70,
-        60,
-        canvas.width - 450,
-        canvas.height - 250,
-        164 * 2,
-        200
-      );
-      context.drawImage(
-        graphics,
-        0,
-        0,
-        164,
-        100,
-        canvas.width - 310,
-        canvas.height - 100 * 2,
-        164 * 2,
-        100 * 2
-      );
-    }
-    if (!shooting) {
-      context.drawImage(
-        graphics,
-        0,
-        0,
-        164,
-        100,
-        canvas.width - 164 * 2,
-        canvas.height - 100 * 2,
-        164 * 2,
-        100 * 2
-      );
-    }
-
-    context.drawImage(
-      graphics,
-      200,
-      0,
-      28,
-      28,
-      canvas.width / 2,
-      canvas.height / 2,
-      28,
-      28
-    );
+    player.update();
+    twoDRenderer.render();
     renderer.render(scene, camera);
   }
   animate();
