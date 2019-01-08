@@ -53,8 +53,8 @@ window.onload = function() {
   renderer.setClearColor(0x4444ff);
   document.body.appendChild(renderer.domElement);
 
-  var player = new Player(camera, ctrl);
   var map = new Map(scene);
+  var player = new Player(camera, ctrl, map);
 
   var twoDRenderer = new TwoDRenderer(canvas, context, player);
 
