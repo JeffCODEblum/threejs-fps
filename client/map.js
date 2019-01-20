@@ -22,6 +22,7 @@ export default function(scene) {
   scene.add(ground);
 
   // boxes
+  this.walls = [];
   var brickTexture = new THREE.ImageUtils.loadTexture("./brick.png");
   var brickMaterial = new THREE.MeshBasicMaterial({
     map: brickTexture,
@@ -41,6 +42,7 @@ export default function(scene) {
           cube.position.x = i * 10 - 50 + 5;
           cube.position.z = j * 10 - 50 + 5;
           cube.position.y = 5;
+          this.walls.push(cube);
           scene.add(cube);
         } else {
           this.map[i].push(0);
@@ -49,10 +51,14 @@ export default function(scene) {
     }
   }
 
+  this.checkCollision = function(body) {
+    var originPoint = body.position.clone();
+  };
+
   this.getTileAt = function(x, y) {
     var indexI = Math.floor((x + 50) / 10);
     var indexJ = Math.floor((y + 50) / 10);
-    console.log(indexI, indexJ);
+    // console.log(indexI, indexJ);
     if (indexI >= 0 && indexJ >= 0 && indexI < 10 && indexJ < 10) {
       return this.map[indexI][indexJ];
     }
